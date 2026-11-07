@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>浙工大生化/微生物刷题</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,-apple-system,sans-serif;background:#f5f7fa;padding:12px;color:#1e293b;line-height:1.5}
+.header{display:flex;justify-content:space-between;align-items:center;padding-bottom:12px;border-bottom:1px solid #d1d9e6;margin-bottom:12px}
+.header h1{font-size:1.2rem;color:#0b3b5c}
+.stats{font-size:0.75rem;background:#e2e8f0;padding:4px 10px;border-radius:40px}
+.subjects{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.subjects button{background:#fff;border:1px solid #cbd5e1;padding:6px 14px;border-radius:30px;font-size:0.8rem;cursor:pointer;color:#334155;font-weight:500}
+.subjects button.active{background:#0b3b5c;color:#fff;border-color:#0b3b5c}
+.filters{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.filters button{background:#fff;border:1px solid #cbd5e1;padding:5px 12px;border-radius:30px;font-size:0.75rem;cursor:pointer;color:#334155}
+.filters button.active{background:#0b3b5c;color:#fff;border-color:#0b3b5c}
+.filters button.wrong-filter{background:#fff0f0;border-color:#e68a8a;color:#b91c1c}
+.filters button.wrong-filter.active{background:#b91c1c;color:#fff;border-color:#b91c1c}
+.filters button.star-filter{background:#fffbea;border-color:#d4a017;color:#a16207}
+.filters button.star-filter.active{background:#d4a017;color:#fff;border-color:#d4a017}
+.tools{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:16px;padding:8px;background:#fff;border-radius:14px;border:1px solid #e9edf4}
+.tools button{background:#0b3b5c;border:none;padding:6px 12px;border-radius:30px;font-size:0.75rem;color:#fff;cursor:pointer}
+.tools button.gray{background:#94a3b8}
+.tools input{width:60px;padding:5px 8px;border:1px solid #cbd5e1;border-radius:8px;font-size:0.8rem}
+.tools label{font-size:0.75rem;color:#475569;display:flex;align-items:center;gap:4px}
+.card{background:#fff;border-radius:16px;padding:14px;margin-bottom:12px;box-shadow:0 2px 6px rgba(0,0,0,0.03);border:1px solid #e9edf4;position:relative}
+.meta{font-size:0.7rem;color:#5e6f8d;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center}
+.star{font-size:1.2rem;cursor:pointer;color:#cbd5e1;line-height:1;user-select:none}
+.star.on{color:#f59e0b}
+.q{font-size:0.95rem;font-weight:500;margin-bottom:10px;padding-right:24px;white-space:pre-wrap;}
+.opt{display:flex;gap:8px;background:#f8fafc;border-radius:12px;padding:10px 12px;border:1px solid #e2e8f0;margin-bottom:6px;cursor:pointer;font-size:0.85rem}
+.opt.correct{background:#dff0d8;border-color:#7fc47f}
+.opt.wrong{background:#f8d7da;border-color:#e68a8a}
+.opt.selected{background:#dbeafe;border-color:#3b82f6}
+.opt span:first-child{font-weight:600;min-width:20px}
+.exp{margin-top:10px;padding:10px;background:#f1f5f9;border-radius:12px;font-size:0.8rem;border-left:4px solid #2563eb;display:none; white-space:pre-wrap;}
+.exp.show{display:block}
+.tf-btn{display:inline-block;padding:8px 24px;border-radius:30px;background:#f1f5f9;border:1px solid #cbd5e1;margin-right:10px;cursor:pointer;font-size:0.85rem;text-align:center}
+.tf-btn.correct{background:#dff0d8;border-color:#7fc47f}
+.tf-btn.wrong{background:#f8d7da;border-color:#e68a8a}
+.ans{margin-top:10px;padding:12px;background:#f1f5f9;border-radius:12px;font-size:0.85rem;display:none;white-space:pre-wrap}
+.ans.show{display:block}
+.btn{background:#fff;border:1px solid #b9c7da;padding:6px 14px;border-radius:30px;font-size:0.8rem;cursor:pointer;margin-top:8px}
+.submit-btn{background:#0b3b5c;color:#fff;border:none;padding:8px 20px;border-radius:30px;font-size:0.85rem;cursor:pointer;margin-top:8px}
+.clear-wrong-btn{background:#fff0f0;border:1px solid #e68a8a;color:#b91c1c;padding:6px 14px;border-radius:30px;font-size:0.8rem;cursor:pointer;margin-top:8px}
+.empty{text-align:center;color:#7b8ba3;padding:30px 0}
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:99;justify-content:center;align-items:flex-start;padding:40px 12px}
+.modal.show{display:flex}
+.modal-content{background:#fff;border-radius:16px;padding:20px;max-width:500px;width:100%;max-height:80vh;overflow-y:auto}
+.modal-content h2{font-size:1.1rem;margin-bottom:12px;color:#0b3b5c}
+.modal-content .stat-line{font-size:0.85rem;padding:6px 0;border-bottom:1px solid #f1f5f9;display:flex;justify-content:space-between}
+.modal-content .stat-line b{color:#0b3b5c}
+.modal-content .top-wrong{font-size:0.8rem;color:#475569;padding:4px 0;border-bottom:1px dashed #e2e8f0}
+.close-modal{margin-top:14px;background:#0b3b5c;color:#fff;border:none;padding:8px 20px;border-radius:30px;cursor:pointer;font-size:0.85rem}
+.note-icon{cursor:pointer;font-size:0.95rem;color:#94a3b8;user-select:none;margin-right:6px}
+.note-icon.has-note{color:#2563eb}
+.note-textarea{width:100%;height:220px;padding:12px;border:1px solid #cbd5e1;border-radius:12px;font-size:0.9rem;font-family:inherit;line-height:1.6;resize:vertical;box-sizing:border-box}
+.note-q-preview{font-size:0.8rem;color:#64748b;background:#f1f5f9;padding:8px 10px;border-radius:10px;margin-bottom:10px;max-height:80px;overflow-y:auto}
+#answerSheetBtn{position:fixed;right:16px;bottom:20px;background:#0b3b5c;color:#fff;border:none;border-radius:50%;width:56px;height:56px;font-size:1.5rem;box-shadow:0 4px 12px rgba(0,0,0,0.15);cursor:pointer;z-index:50}
+.answer-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(50px,1fr));gap:8px;max-height:60vh;overflow-y:auto;padding:8px 0}
+.answer-item{aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;border-radius:10px;font-size:0.8rem;font-weight:600;cursor:pointer;border:1px solid #e2e8f0;background:#f8fafc;color:#334155}
+.answer-item.done{background:#dff0d8;border-color:#7fc47f;color:#166534}
+.answer-item.wrong{background:#f8d7da;border-color:#e68a8a;color:#b91c1c}
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>浙工大 · 生化 / 微生物</h1>
+  <div class="stats" id="stats">加载中...</div>
+</div>
+
+<div class="subjects" id="subjects">
+  <button class="active" data-s="all">全部科目</button>
+  <button data-s="bio">生物化学</button>
+  <button data-s="micro">微生物学</button>
+</div>
+
+<div class="filters" id="filters">
+  <button class="active" data-f="all">全部</button>
+  <button data-f="choice">选择题</button>
+  <button data-f="multi">多选题</button>
+  <button data-f="tf">判断题</button>
+  <button data-f="blank">填空题</button>
+  <button data-f="essay">简答/论述</button>
+  <button class="wrong-filter" data-f="wrong">错题本</button>
+  <button class="star-filter" data-f="starred">⭐收藏</button>
+</div>
+
+<div class="tools">
+  <label><input type="checkbox" id="shuffleChk"> 随机顺序</label>
+  <label>抽题 <input type="number" id="randomCount" value="10" min="1"> 道</label>
+  <button id="randomBtn">🎲 随机抽题</button>
+  <button id="statsBtn" class="gray">📊 统计</button>
+  <button id="clearBtn" class="gray">清除记录</button>
+  <button id="exportBtn" class="gray">📤 导出</button>
+  <button id="importBtn" class="gray">📥 导入</button>
+  <input type="file" id="importFile" accept=".json" style="display:none">
+</div>
+
+<div id="app"></div>
+<button id="answerSheetBtn" title="答题卡">📋</button>
+
+<div class="modal" id="answerSheetModal">
+  <div class="modal-content">
+    <h2>📋 答题卡</h2>
+    <div id="answerSheetSummary" style="font-size:0.85rem;color:#64748b;margin-bottom:8px;"></div>
+    <div class="answer-grid" id="answerSheetGrid"></div>
+    <button class="close-modal" onclick="closeAnswerSheet()">关闭</button>
+  </div>
+</div>
+<div class="modal" id="noteModal">
+  <div class="modal-content">
+    <h2>📝 笔记</h2>
+    <div class="note-q-preview" id="noteQPreview"></div>
+    <textarea class="note-textarea" id="noteArea" placeholder="记录这道题的知识点、易错点、思路……"></textarea>
+    <div style="margin-top:10px;display:flex;gap:8px;justify-content:flex-end;">
+      <button class="close-modal" onclick="closeNote()">关闭</button>
+      <button class="close-modal" id="noteSaveBtn">保存</button>
+      <button class="close-modal" id="noteDeleteBtn" style="background:#b91c1c;">删除笔记</button>
+    </div>
+  </div>
+</div>
+<div class="modal" id="statsModal">
+  <div class="modal-content">
+    <h2>做题统计</h2>
+    <div id="statsContent"></div>
+    <button class="close-modal" onclick="closeStats()">关闭</button>
+  </div>
+</div>
+
+<script>
+// ======== 全局题库变量 ========
+let Q = [];
+
+// ======== 本地存储 ========
+var RECORDS_KEY = 'biochem_records';
+var STARRED_KEY = 'biochem_starred';
+var WRONG_KEY   = 'biochem_wrong';
+var PREFS_KEY   = 'biochem_prefs';
+var NOTES_KEY = 'biochem_notes';
+
+var records = {}, starred = {}, wrongSet = {}, notes = {};
+var prefs   = { shuffle: false, randomCount: 10 };
+
+try { records = JSON.parse(localStorage.getItem(RECORDS_KEY)) || {}; } catch(e){}
+try { starred = JSON.parse(localStorage.getItem(STARRED_KEY)) || {}; } catch(e){}
+try { wrongSet = JSON.parse(localStorage.getItem(WRONG_KEY)) || {}; } catch(e){}
+try { notes = JSON.parse(localStorage.getItem(NOTES_KEY)) || {}; } catch(e){}
+try { prefs   = Object.assign(prefs, JSON.parse(localStorage.getItem(PREFS_KEY)) || {}); } catch(e){}
+
+function saveRecords(){ localStorage.setItem(RECORDS_KEY, JSON.stringify(records)); }
+function saveStarred(){ localStorage.setItem(STARRED_KEY, JSON.stringify(starred)); }
+function saveWrongSet(){ localStorage.setItem(WRONG_KEY, JSON.stringify(wrongSet)); }
+function saveNotes(){ localStorage.setItem(NOTES_KEY, JSON.stringify(notes)); }
+function savePrefs(){   localStorage.setItem(PREFS_KEY, JSON.stringify(prefs)); }
+
+// ======== 状态 ========
+var currentSubject = 'all';
+var currentFilter = 'all';
+var randomIds = [];
+var shuffleTrigger = 0;
+var cachedList = null;
+var cacheKey = '';
+var currentNoteId = null;
+var app = document.getElementById('app');
+var statsEl = document.getElementById('stats');
+
+function invalidateCache(){ cachedList = null; cacheKey = ''; }
+
+function shuffleArray(arr){
+  var a = arr.slice();
+  for(var i = a.length - 1; i > 0; i--){
+    var j = Math.floor(Math.random() * (i + 1));
+    var t = a[i]; a[i] = a[j]; a[j] = t;
+  }
+  return a;
+}
+
+function baseFiltered(){
+  var list = Q.slice();
+  if(currentSubject !== 'all'){
+    list = list.filter(function(item){ return (item.s || 'bio') === currentSubject; });
+  }
+  if(currentFilter === 'wrong')    return list.filter(function(item){ return wrongSet[item.i]; });
+  if(currentFilter === 'starred')  return list.filter(function(item){ return starred[item.i]; });
+  if(currentFilter === 'all')      return list;
+  return list.filter(function(item){ return item.t === currentFilter; });
+}
+
+function getFiltered(){
+  var key = currentSubject + '|' + currentFilter + '|' + prefs.shuffle + '|' + randomIds.join(',') + '|' + shuffleTrigger;
+  if(cacheKey === key && cachedList) return cachedList;
+
+  var list;
+  if(randomIds.length > 0){
+    var map = {};
+    Q.forEach(function(item){ map[item.i] = item; });
+    list = randomIds.map(function(id){ return map[id]; }).filter(Boolean);
+  } else {
+    list = baseFiltered();
+    if(prefs.shuffle) list = shuffleArray(list);
+  }
+  cachedList = list;
+  cacheKey = key;
+  return list;
+}
+
+function getRecord(id){ return records[id] || {}; }
+
+// ======== 渲染 ========
+function updateStats(){
+  var list = getFiltered();
+  var total = list.length;
+  var done = list.filter(function(item){ return records[item.i] && records[item.i].answered; }).length;
+  statsEl.textContent = done + ' / ' + total;
+}
+
+function render(){
+  var list = getFiltered();
+  if(list.length === 0){
+    app.innerHTML = '<div class="empty">暂无题目</div>';
+    updateStats();
+    return;
+  }
+  var html = '';
+  list.forEach(function(item, idx){
+    var typeName = item.t === 'choice' ? '选择题' : item.t === 'multi' ? '多选题' : item.t === 'tf' ? '判断题' : item.t === 'blank' ? '填空题' : '简答/论述';
+    var subjName = (item.s || 'bio') === 'micro' ? '微生物' : '生化';
+    var isStar = !!starred[item.i];
+    var hasNote = !!(notes[item.i] && notes[item.i].trim());
+    var meta = '<div class="meta"><span>' + subjName + ' · 真题 ' + (item.y || '') + ' · ' + typeName + '</span>'
+         + '<span>'
+         + '<span class="note-icon' + (hasNote ? ' has-note' : '') + '" data-note="' + item.i + '">' + (hasNote ? '📝' : '📄') + '</span>'
+         + '<span class="star' + (isStar ? ' on' : '') + '" data-star="' + item.i + '">' + (isStar ? '★' : '☆') + '</span> '
+         + (idx+1) + '/' + list.length
+         + '</span></div>';
+    var card = '<div class="card" data-id="' + item.i + '">' + meta;
+    var r = getRecord(item.i);
+
+    if(item.t === 'choice'){
+      card += '<div class="q">' + item.q + '</div>';
+      item.o.forEach(function(opt, oi){
+        var cls = 'opt';
+        if(r.answered){
+          if(oi === item.a) cls += ' correct';
+          else if(oi === r.selected) cls += ' wrong';
+        }
+        card += '<div class="' + cls + '" data-opt="' + oi + '"><span>' + String.fromCharCode(65+oi) + '.</span><span>' + opt + '</span></div>';
+      });
+      card += '<div class="exp' + (r.showExp ? ' show' : '') + '"><strong>解析：</strong>' + (item.e || '暂无') + '</div>';
+    }
+    else if(item.t === 'multi'){
+      card += '<div class="q">' + item.q + '</div>';
+      var selectedArr = r.selected || [];
+      item.o.forEach(function(opt, oi){
+        var cls = 'opt';
+        if(r.answered){
+          if(item.a.indexOf(oi) !== -1) cls += ' correct';
+          else if(selectedArr.indexOf(oi) !== -1) cls += ' wrong';
+        } else {
+          if(selectedArr.indexOf(oi) !== -1) cls += ' selected';
+        }
+        card += '<div class="' + cls + '" data-opt="' + oi + '"><span>' + String.fromCharCode(65+oi) + '.</span><span>' + opt + '</span></div>';
+      });
+      if(!r.answered) card += '<button class="submit-btn" data-action="submit-multi">提交答案</button>';
+      card += '<div class="exp' + (r.showExp ? ' show' : '') + '"><strong>解析：</strong>' + (item.e || '暂无') + '</div>';
+    }
+    else if(item.t === 'tf'){
+      card += '<div class="q">' + item.q + '</div>';
+      card += '<div style="margin:8px 0">';
+      card += '<span class="tf-btn' + (r.answered && r.selected === true ? (item.a === true ? ' correct' : ' wrong') : '') + '" data-tf="true">正确</span>';
+      card += '<span class="tf-btn' + (r.answered && r.selected === false ? (item.a === false ? ' correct' : ' wrong') : '') + '" data-tf="false">错误</span>';
+      card += '</div>';
+      card += '<div class="exp' + (r.showExp ? ' show' : '') + '"><strong>解析：</strong>' + (item.e || '暂无') + '</div>';
+    }
+    else if(item.t === 'blank' || item.t === 'essay'){
+      card += '<div class="q">' + item.q + '</div>';
+      card += '<button class="btn" data-action="toggle-ans">' + (r.showAns ? '关闭答案' : '显示答案') + '</button>';
+      card += '<div class="ans' + (r.showAns ? ' show' : '') + '"><strong>答案：</strong>' + (item.a || '暂无') + '</div>';
+    }
+
+    if(r.answered && r.correct === false){
+      card += '<button class="clear-wrong-btn" data-action="clear-one-wrong" data-id="' + item.i + '">清除该题记录</button>';
+    }
+    card += '</div>';
+    html += card;
+  });
+  app.innerHTML = html;
+  updateStats();
+}
+
+// ======== 答题事件 ========
+app.addEventListener('click', function(e){
+  var noteEl = e.target.closest('[data-note]');
+  if(noteEl){
+    var nid = noteEl.dataset.note;
+    currentNoteId = nid;
+    var item = null;
+    for(var i=0;i<Q.length;i++){ if(Q[i].i === nid){ item = Q[i]; break; } }
+    document.getElementById('noteQPreview').textContent = item ? item.q : '';
+    document.getElementById('noteArea').value = notes[nid] || '';
+    document.getElementById('noteModal').classList.add('show');
+    return;
+  }
+  var starEl = e.target.closest('[data-star]');
+  if(starEl){
+    var sid = starEl.dataset.star;
+    if(starred[sid]) delete starred[sid];
+    else starred[sid] = true;
+    saveStarred();
+    invalidateCache();
+    render();
+    return;
+  }
+
+  var clearBtn = e.target.closest('[data-action="clear-one-wrong"]');
+  if(clearBtn){
+    var cid = clearBtn.dataset.id;
+    if(confirm('清除这道题的作答记录？\n\n该题会回到未做状态，可以重新作答。')){
+      delete records[cid];
+      delete wrongSet[cid];
+      saveRecords();
+      saveWrongSet();
+      invalidateCache();
+      render();
+    }
+    return;
+  }
+
+  var target = e.target.closest('[data-id]');
+  if(!target) return;
+  var id = target.dataset.id;
+  var item = null;
+  for(var i=0;i<Q.length;i++){ if(Q[i].i === id){ item = Q[i]; break; } }
+  if(!item) return;
+  var r = records[id] || {};
+
+  if(item.t === 'choice' && e.target.closest('.opt')){
+    if(r.answered) return;
+    var optIdx = parseInt(e.target.closest('.opt').dataset.opt);
+    r.answered = true; r.selected = optIdx;
+    r.correct = (optIdx === item.a);
+    if(!r.correct) wrongSet[id] = true; else delete wrongSet[id];
+    r.showExp = true;
+    records[id] = r; saveRecords(); saveWrongSet();
+    render(); return;
+  }
+  if(item.t === 'multi' && e.target.closest('.opt')){
+    if(r.answered) return;
+    var optIdx2 = parseInt(e.target.closest('.opt').dataset.opt);
+    var sel = r.selected || [];
+    var pos = sel.indexOf(optIdx2);
+    if(pos === -1) sel.push(optIdx2); else sel.splice(pos,1);
+    r.selected = sel;
+    records[id] = r; saveRecords();
+    render(); return;
+  }
+  if(item.t === 'multi' && e.target.closest('[data-action="submit-multi"]')){
+    if(r.answered) return;
+    var sel2 = r.selected || [];
+    var corr = item.a;
+    var ok = sel2.length === corr.length && sel2.every(function(v){ return corr.indexOf(v) !== -1; });
+    r.answered = true; r.correct = ok; r.showExp = true;
+    if(!ok) wrongSet[id] = true; else delete wrongSet[id];
+    records[id] = r; saveRecords(); saveWrongSet();
+    render(); return;
+  }
+  if(item.t === 'tf' && e.target.closest('.tf-btn')){
+    if(r.answered) return;
+    var val = e.target.closest('.tf-btn').dataset.tf === 'true';
+    r.answered = true; r.selected = val;
+    r.correct = (val === item.a);
+    if(!r.correct) wrongSet[id] = true; else delete wrongSet[id];
+    r.showExp = true;
+    records[id] = r; saveRecords(); saveWrongSet();
+    render(); return;
+  }
+  if((item.t === 'blank' || item.t === 'essay') && e.target.closest('[data-action="toggle-ans"]')){
+    r.showAns = !r.showAns;
+    records[id] = r; saveRecords();
+    render(); return;
+  }
+});
+
+// ======== 科目筛选 ========
+document.getElementById('subjects').addEventListener('click', function(e){
+  if(e.target.tagName !== 'BUTTON') return;
+  var s = e.target.dataset.s;
+  if(!s) return;
+  currentSubject = s;
+  randomIds = [];
+  invalidateCache();
+  var btns = this.querySelectorAll('button');
+  for(var i=0;i<btns.length;i++) btns[i].classList.remove('active');
+  e.target.classList.add('active');
+  render();
+});
+
+// ======== 题型筛选 ========
+document.getElementById('filters').addEventListener('click', function(e){
+  if(e.target.tagName !== 'BUTTON') return;
+  var f = e.target.dataset.f;
+  if(!f) return;
+  currentFilter = f;
+  randomIds = [];
+  invalidateCache();
+  var btns = this.querySelectorAll('button');
+  for(var i=0;i<btns.length;i++) btns[i].classList.remove('active');
+  e.target.classList.add('active');
+  render();
+});
+
+// ======== 工具条 ========
+document.getElementById('shuffleChk').addEventListener('change', function(e){
+  prefs.shuffle = e.target.checked;
+  savePrefs();
+  invalidateCache();
+  render();
+});
+
+document.getElementById('randomBtn').addEventListener('click', function(){
+  var n = parseInt(document.getElementById('randomCount').value) || 10;
+  prefs.randomCount = n;
+  savePrefs();
+  var base = baseFiltered();
+  if(base.length === 0){ alert('当前筛选下没有题目'); return; }
+  var pick = shuffleArray(base).slice(0, Math.min(n, base.length));
+  randomIds = pick.map(function(item){ return item.i; });
+  invalidateCache();
+  render();
+});
+
+document.getElementById('statsBtn').addEventListener('click', function(){
+  var total = 0, done = 0, correct = 0;
+  var byType = {};
+  var wrongCount = {};
+  var base = Q.slice();
+  if(currentSubject !== 'all'){
+    base = base.filter(function(item){ return (item.s || 'bio') === currentSubject; });
+  }
+  base.forEach(function(item){
+    total++;
+    var r = records[item.i];
+    if(r && r.answered){
+      done++;
+      if(r.correct) correct++;
+      else wrongCount[item.i] = (wrongCount[item.i] || 0) + 1;
+    }
+    if(!byType[item.t]) byType[item.t] = { total:0, done:0, correct:0 };
+    byType[item.t].total++;
+    if(r && r.answered){
+      byType[item.t].done++;
+      if(r.correct) byType[item.t].correct++;
+    }
+  });
+  var typeName = { choice:'选择题', multi:'多选题', tf:'判断题', blank:'填空题', essay:'简答/论述' };
+  var html = '';
+  html += '<div class="stat-line"><span>总题数</span><b>' + total + '</b></div>';
+  html += '<div class="stat-line"><span>已做</span><b>' + done + '</b></div>';
+  html += '<div class="stat-line"><span>正确</span><b>' + correct + '</b></div>';
+  html += '<div class="stat-line"><span>正确率</span><b>' + (done ? (correct/done*100).toFixed(1) + '%' : '—') + '</b></div>';
+  html += '<h2 style="margin-top:14px;font-size:0.95rem">各题型</h2>';
+  Object.keys(byType).forEach(function(k){
+    var b = byType[k];
+    var rate = b.done ? (b.correct/b.done*100).toFixed(0) + '%' : '—';
+    html += '<div class="stat-line"><span>' + (typeName[k] || k) + '</span><b>' + b.done + '/' + b.total + '  ' + rate + '</b></div>';
+  });
+  var wrongIds = Object.keys(wrongCount).sort(function(a,b){ return wrongCount[b] - wrongCount[a]; }).slice(0,10);
+  if(wrongIds.length > 0){
+    html += '<h2 style="margin-top:14px;font-size:0.95rem">最常做错的题</h2>';
+    wrongIds.forEach(function(id){
+      var item = Q.find(function(q){ return q.i === id; });
+      if(!item) return;
+      html += '<div class="top-wrong">✗ ' + item.q.slice(0, 30) + (item.q.length > 30 ? '…' : '') + '</div>';
+    });
+  }
+  document.getElementById('statsContent').innerHTML = html;
+  document.getElementById('statsModal').classList.add('show');
+});
+
+function closeStats(){ document.getElementById('statsModal').classList.remove('show'); }
+window.closeStats = closeStats;
+
+document.getElementById('clearBtn').addEventListener('click', function(){
+  if(!confirm('清除已做对的题目记录？\n\n做对的题将变为未做，可重新作答；\n做错的题保留痕迹，错题本和收藏完整保留。')) return;
+  var newRecords = {};
+  Object.keys(records).forEach(function(id){
+    var r = records[id];
+    if(r.correct === false){
+      newRecords[id] = r;
+    }
+  });
+  records = newRecords;
+  randomIds = [];
+  saveRecords();
+  invalidateCache();
+  render();
+});
+
+// ======== 导出 / 导入 ========
+document.getElementById('exportBtn').addEventListener('click', function(){
+  var data = { records: records, starred: starred, wrongSet: wrongSet, prefs: prefs };
+  var blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = 'biochem_backup_' + new Date().toISOString().slice(0,10) + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+document.getElementById('importBtn').addEventListener('click', function(){
+  document.getElementById('importFile').click();
+});
+
+document.getElementById('importFile').addEventListener('change', function(e){
+  var file = e.target.files[0];
+  if(!file) return;
+  var reader = new FileReader();
+  reader.onload = function(ev){
+    try {
+      var data = JSON.parse(ev.target.result);
+      if(!data.records && !data.starred && !data.wrongSet){
+        alert('文件格式不对，请选择本网站导出的备份文件。');
+        return;
+      }
+      if(!confirm('导入将覆盖当前所有做题记录、错题本和收藏，确定吗？')) return;
+      records = data.records || {};
+      starred = data.starred || {};
+      wrongSet = data.wrongSet || {};
+      prefs = Object.assign(prefs, data.prefs || {});
+      saveRecords(); saveStarred(); saveWrongSet(); savePrefs();
+      document.getElementById('shuffleChk').checked = !!prefs.shuffle;
+      document.getElementById('randomCount').value = prefs.randomCount || 10;
+      invalidateCache();
+      render();
+      alert('导入成功！');
+    } catch(err) {
+      alert('导入失败：' + err.message);
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+});
+
+// 笔记弹窗
+document.getElementById('noteSaveBtn').addEventListener('click', function(){
+  if(!currentNoteId) return;
+  var text = document.getElementById('noteArea').value;
+  if(text.trim()) notes[currentNoteId] = text;
+  else delete notes[currentNoteId];
+  saveNotes();
+  document.getElementById('noteModal').classList.remove('show');
+  invalidateCache();
+  render();
+});
+document.getElementById('noteDeleteBtn').addEventListener('click', function(){
+  if(!currentNoteId) return;
+  if(!confirm('删除这道题的笔记？')) return;
+  delete notes[currentNoteId];
+  saveNotes();
+  document.getElementById('noteModal').classList.remove('show');
+  invalidateCache();
+  render();
+});
+function closeNote(){
+  document.getElementById('noteModal').classList.remove('show');
+}
+window.closeNote = closeNote;
+
+// ======== 答题卡 ========
+function renderAnswerSheet(){
+  var list = getFiltered();
+  var grid = document.getElementById('answerSheetGrid');
+  var done = list.filter(function(item){ return records[item.i] && records[item.i].answered; }).length;
+  document.getElementById('answerSheetSummary').textContent = '已做 ' + done + ' / ' + list.length;
+  var html = '';
+  list.forEach(function(item, idx){
+    var r = records[item.i] || {};
+    var cls = 'answer-item';
+    if(r.answered){
+      cls += r.correct ? ' done' : ' wrong';
+    }
+    html += '<div class="' + cls + '" data-answer-id="' + item.i + '">' + (idx+1) + '</div>';
+  });
+  grid.innerHTML = html;
+}
+
+document.getElementById('answerSheetBtn').addEventListener('click', function(){
+  renderAnswerSheet();
+  document.getElementById('answerSheetModal').classList.add('show');
+});
+
+document.getElementById('answerSheetGrid').addEventListener('click', function(e){
+  var el = e.target.closest('[data-answer-id]');
+  if(!el) return;
+  var id = el.dataset.answerId;
+  closeAnswerSheet();
+  var card = document.querySelector('.card[data-id="' + id + '"]');
+  if(card){
+    card.scrollIntoView({behavior:'smooth', block:'center'});
+    card.style.transition = 'box-shadow 0.3s';
+    card.style.boxShadow = '0 0 0 3px #2563eb';
+    setTimeout(function(){ card.style.boxShadow = ''; }, 1500);
+  }
+});
+
+function closeAnswerSheet(){
+  document.getElementById('answerSheetModal').classList.remove('show');
+}
+window.closeAnswerSheet = closeAnswerSheet;
+
+// ======== 启动加载逻辑 ========
+async function loadData() {
+  try {
+    const response = await fetch('questions.json');
+    if (!response.ok) throw new Error('找不到 questions.json 文件');
+    Q = await response.json();
+    
+    document.getElementById('shuffleChk').checked = !!prefs.shuffle;
+    document.getElementById('randomCount').value = prefs.randomCount || 10;
+    render();
+  } catch (error) {
+    console.error(error);
+    app.innerHTML = '<div class="empty">题库加载失败！<br><br>请确保 questions.json 文件和 index.html 在同一个文件夹，且格式正确。<br>错误信息：' + error.message + '</div>';
+    statsEl.textContent = '加载失败';
+  }
+}
+
+// 立即执行加载
+loadData();
+</script>
+</body>
+</html>
